@@ -1,9 +1,25 @@
 <?php
 session_start();
 
-// Function to validate login credentials
-function loginSystem($username, $password) {
-    return ($username === 'student' && $password === 'quiz123');
+// Function to validate login credentials (now only checks password)
+function loginSystem($email, $password) {
+    // Accept any email as long as password is correct (demo purpose)
+    return ($password === 'quiz123');
+}
+
+// Function to extract display name from email
+function extractNameFromEmail($email) {
+    // Get local part before '@'
+    $local = explode('@', $email)[0];
+    // If contains underscore, take part after last underscore
+    if (strpos($local, '_') !== false) {
+        $parts = explode('_', $local);
+        $name = end($parts);
+    } else {
+        $name = $local;
+    }
+    // Capitalize first letter
+    return ucfirst($name);
 }
 
 // Initialize login attempts counter
@@ -21,23 +37,28 @@ if ($_SESSION['login_attempts'] >= 3) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && !$locked) {
-    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['username'] ?? '');   // field named 'username' but holds email
     $password = trim($_POST['password'] ?? '');
     
-    if (loginSystem($username, $password)) {
+    if (loginSystem($email, $password)) {
         // Successful login
         $_SESSION['loggedin'] = true;
-        $_SESSION['login_attempts'] = 0; // reset attempts
-        header('Location: difficulty.php');
+        $_SESSION['login_attempts'] = 0;
+        
+        // Store email and extracted username
+        $_SESSION['email'] = $email;
+        $_SESSION['username'] = extractNameFromEmail($email);
+        
+        header('Location: quizzes.php');
         exit();
     } else {
         $_SESSION['login_attempts']++;
         $remaining = 3 - $_SESSION['login_attempts'];
         if ($_SESSION['login_attempts'] >= 3) {
             $locked = true;
-            $error = ""; // no error message, show locked page instead
+            $error = "";
         } else {
-            $error = "Invalid username or password. Attempts remaining: $remaining";
+            $error = "Invalid password. Attempts remaining: $remaining";
         }
     }
 }
@@ -217,7 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && !$locked)
 </head>
 <body class="<?php echo $locked ? 'locked-page' : 'login-page'; ?>">
     <?php if ($locked): ?>
-        <!-- LOCKED STATE: Hive Sealed Alert Card -->
         <div class="alert-card">
             <p class="alert-message">
                 Un-bee-lievable! 🐝 That's<br>
@@ -228,7 +248,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && !$locked)
             <img src="security-bee.png" alt="Security Bee Guard" class="security-bee-img">
         </div>
     <?php else: ?>
-        <!-- NORMAL LOGIN FORM -->
         <div class="container">
             <div class="login-card">
                 <h2>Welcome to QuizBee!</h2>
@@ -239,8 +258,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && !$locked)
 
                 <form method="post">
                     <div class="form-group">
-                        <label for="username">Email:</label>
-                        <input type="text" id="username" name="username" placeholder="Enter your email" required>
+                        <label for="username">Email address:</label>
+                        <input type="text" id="username" name="username" placeholder="e.g., medina_rian@plpasig.edu.ph" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password:</label>
@@ -248,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && !$locked)
                     </div>
                     <button type="submit" name="login">Login</button>
                 </form>
-                <p class="hint">Hint: student / quiz123</p>
+                <p class="hint">Hint: Any email + password <strong>quiz123</strong></p>
             </div>
             <div class="bee-container">
                 <img src="bee.png" alt="QuizBee Mascot" class="bee-image">

@@ -1,17 +1,14 @@
 <?php
 session_start();
 
-// Prevent access without login
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit();
 }
 
-// Get the selected subject from URL (GET) and store in session
 if (isset($_GET['subject']) && !empty(trim($_GET['subject']))) {
     $_SESSION['quiz_subject'] = trim(urldecode($_GET['subject']));
 } elseif (!isset($_SESSION['quiz_subject'])) {
-    // If no subject is set, redirect back to quizzes list
     header('Location: quizzes.php');
     exit();
 }
@@ -20,27 +17,16 @@ $username = $_SESSION['username'] ?? 'Sanchez';
 $email    = $_SESSION['email'] ?? 'sanchez@example.com';
 $subject  = $_SESSION['quiz_subject'];
 
-$message = '';
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
     $difficulty = $_POST['difficulty'];
     if (in_array($difficulty, ['easy', 'medium', 'hard'])) {
         $_SESSION['difficulty'] = $difficulty;
-        // Clear any previous quiz data
         unset($_SESSION['quiz_questions']);
         unset($_SESSION['user_answers']);
         unset($_SESSION['quiz_score']);
         unset($_SESSION['quiz_percentage']);
         unset($_SESSION['quiz_remarks']);
-        
-        // JavaScript confirmation and timer warning
-        echo "<script>
-            if(confirm('You selected " . ucfirst($difficulty) . " difficulty for \"{$subject}\".\\nA timer of 5 minutes will start as soon as you begin the quiz.\\nClick OK to continue.')) {
-                window.location.href = 'quiz.php';
-            } else {
-                window.location.href = 'difficulty.php?subject=" . urlencode($subject) . "';
-            }
-        </script>";
+        header('Location: quiz.php');
         exit();
     }
 }
@@ -235,6 +221,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         #difficulty-form {
             display: none;
         }
+
+        /* Custom confirm modal */
+        #confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(253, 232, 131, 0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #confirm-box {
+            background: #fdfce9;
+            border: 1.5px solid #fce883;
+            border-radius: 16px;
+            padding: 36px 40px;
+            width: 380px;
+            max-width: 90vw;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #confirm-box .bee-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        #confirm-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #f8b44c;
+            margin-bottom: 8px;
+        }
+
+        #confirm-body {
+            font-size: 0.9rem;
+            color: #5a4a2a;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        #confirm-body strong {
+            color: #f8b44c;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        #confirm-cancel {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: 1.5px solid #fce883;
+            background: #fff;
+            color: #7d6b3a;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        #confirm-cancel:hover {
+            background: #fef9e3;
+        }
+
+        #confirm-ok {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: none;
+            background: #f8b44c;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        #confirm-ok:hover {
+            background: #e6a030;
+        }
     </style>
 </head>
 <body>
@@ -274,7 +345,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
     </aside>
 
     <main class="main-content">
-
         <div class="page-title"><?php echo htmlspecialchars($subject); ?></div>
         <h2 class="page-subtitle">Select Difficulty</h2>
 
@@ -292,6 +362,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
     </main>
 </div>
 
+<!-- Custom confirm modal -->
+<div id="confirm-overlay">
+    <div id="confirm-box">
+        <div id="confirm-title"></div>
+        <div id="confirm-body"></div>
+        <div class="confirm-buttons">
+            <button id="confirm-cancel">Cancel</button>
+            <button id="confirm-ok">Let's go!</button>
+        </div>
+    </div>
+</div>
+
 <form id="difficulty-form" method="post" action="">
     <input type="hidden" name="difficulty" id="difficulty-input" value="">
 </form>
@@ -300,18 +382,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
     const cards = document.querySelectorAll('.card');
     const form = document.getElementById('difficulty-form');
     const difficultyInput = document.getElementById('difficulty-input');
+    const overlay = document.getElementById('confirm-overlay');
+    const confirmTitle = document.getElementById('confirm-title');
+    const confirmBody = document.getElementById('confirm-body');
+
+    let pendingDifficulty = null;
+    const subject = "<?php echo addslashes($subject); ?>";
+
+    function showConfirm(difficulty) {
+        const name = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+        confirmTitle.textContent = name + ' difficulty selected';
+        confirmBody.innerHTML =
+            `Subject: <strong>${subject}</strong><br>
+             A 5-minute timer will start as soon as you begin the quiz.`;
+        overlay.style.display = 'flex';
+        pendingDifficulty = difficulty;
+    }
 
     cards.forEach(card => {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function () {
             const difficulty = this.getAttribute('data-difficulty');
             if (!difficulty) return;
-            const difficultyName = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-            const subject = "<?php echo addslashes($subject); ?>";
-            if (confirm(`You selected ${difficultyName} difficulty for "${subject}".\nA timer of 5 minutes will start as soon as you begin the quiz.\nClick OK to continue.`)) {
-                difficultyInput.value = difficulty;
-                form.submit();
-            }
+            showConfirm(difficulty);
         });
+    });
+
+    document.getElementById('confirm-ok').addEventListener('click', () => {
+        overlay.style.display = 'none';
+        difficultyInput.value = pendingDifficulty;
+        form.submit();
+    });
+
+    document.getElementById('confirm-cancel').addEventListener('click', () => {
+        overlay.style.display = 'none';
+        pendingDifficulty = null;
+    });
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.style.display = 'none';
+            pendingDifficulty = null;
+        }
     });
 </script>
 

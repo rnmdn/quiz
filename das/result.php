@@ -151,7 +151,7 @@ if ($percentage >= 80) {
         }
         .result-bee-img {
             position: absolute;
-            right: -100px;
+            right: -200px;
             top: 50%;
             transform: translateY(-50%);
             width: 320px;
@@ -219,8 +219,8 @@ if ($percentage >= 80) {
             <img src="<?php echo $beeImage; ?>" alt="QuizBee Result" class="result-bee-img">
         </div>
         <div class="button-group">
-            <a href="quizzes.php" class="retake-btn">📚 Take Another Quiz</a>
-            <a href="review.php" class="retake-btn">🔍 Review Answers</a>
+            <a href="quizzes.php" class="retake-btn">Take Another Quiz</a>
+            <a href="review.php" class="retake-btn">Review Answers</a>
         </div>
     </main>
 </div>

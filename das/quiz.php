@@ -44,7 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($selected !== null && array_key_exists($idx, $userAnswers)) {
             $userAnswers[$idx] = $selected;
             $_SESSION['quiz_user_answers'] = $userAnswers;
-            echo json_encode(['success' => true, 'answeredCount' => count(array_filter($userAnswers))]);
+            $answeredCount = count(array_filter($userAnswers));
+            echo json_encode(['success' => true, 'answeredCount' => $answeredCount]);
         } else {
             echo json_encode(['success' => false]);
         }
@@ -67,21 +68,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: quiz.php");
         exit();
     } elseif (isset($_POST['submit_quiz'])) {
-        // Validate all questions answered
-        $unanswered = array_keys($userAnswers, null, true);
-            // Calculate score
-            $score = 0;
-            foreach ($questions as $idx => $q) {
-                if ($userAnswers[$idx] === $q['ans']) $score++;
-            }
-            $percentage = ($score / $total) * 100;
-            $remarks = ($percentage >= 90) ? "Excellent" : (($percentage >= 70) ? "Good" : "Needs Improvement");
-            $_SESSION['quiz_score'] = $score;
-            $_SESSION['quiz_total'] = $total;
-            $_SESSION['quiz_percentage'] = round($percentage, 2);
-            $_SESSION['quiz_remarks'] = $remarks;
-            header('Location: result.php');
-            exit();
+        // Calculate score
+        $score = 0;
+        foreach ($questions as $idx => $q) {
+            if ($userAnswers[$idx] === $q['ans']) $score++;
+        }
+        $percentage = ($score / $total) * 100;
+        $remarks = ($percentage >= 90) ? "Excellent" : (($percentage >= 70) ? "Good" : "Needs Improvement");
+        $_SESSION['quiz_score'] = $score;
+        $_SESSION['quiz_total'] = $total;
+        $_SESSION['quiz_percentage'] = round($percentage, 2);
+        $_SESSION['quiz_remarks'] = $remarks;
+        header('Location: result.php');
+        exit();
     }
 }
 ?>
@@ -174,7 +173,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 30px;
             overflow: hidden;
         }
-        .progress-bar-fill { height: 100%; background-color: #558df2; border-radius: 10px; width: 0%; }
+        .progress-bar-fill { 
+            height: 100%; 
+            background-color: #558df2; 
+            border-radius: 10px; 
+            width: 0%; 
+            transition: width 0.3s ease;
+        }
         .question-card { background-color: #fdf3bb; padding: 30px; border-radius: 12px; margin-bottom: 20px; }
         .question-box { background-color: #ffffff; padding: 15px 25px; border-radius: 8px; margin-bottom: 25px; }
         .question-box h3 { font-size: 1.3rem; font-weight: bold; }
@@ -262,10 +267,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </aside>
 
     <main class="main-content">
-        <?php if (isset($error)): ?>
-            <div class="error-message">⚠️ <?php echo htmlspecialchars($error); ?></div>
-        <?php endif; ?>
-        
         <div class="quiz-header">
             <div class="quiz-titles">
                 <h1 class="page-title"><?php echo htmlspecialchars($subject); ?></h1>
@@ -276,14 +277,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php
         $answeredCount = count(array_filter($userAnswers));
-        $progressPercent = ($currentIdx + 1) / $total * 100;
+        $progressPercent = ($answeredCount / $total) * 100;
         ?>
         <div class="progress-info">
             <span>Question <?php echo $currentIdx + 1; ?> of <?php echo $total; ?></span>
             <span id="answeredCountDisplay">Items up to 10 | <?php echo $answeredCount; ?> answered</span>
         </div>
         <div class="progress-bar-container">
-            <div class="progress-bar-fill" style="width: <?php echo $progressPercent; ?>%;"></div>
+            <div class="progress-bar-fill" id="progressFill" style="width: <?php echo $progressPercent; ?>%;"></div>
         </div>
 
         <form method="post" id="navForm">
@@ -322,11 +323,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const totalTime = 300;
     const timerEl = document.getElementById('timerDisplay');
     const navForm = document.getElementById('navForm');
+    const totalQuestions = <?php echo $total; ?>;
+    const progressFill = document.getElementById('progressFill');
+    const answeredCountSpan = document.getElementById('answeredCountDisplay');
 
     const quizKey = "quizStartTime_<?php echo addslashes($subject); ?>";
 
     let startTime = localStorage.getItem(quizKey);
-
     if (!startTime) {
         startTime = Date.now();
         localStorage.setItem(quizKey, startTime);
@@ -340,14 +343,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (timeLeft <= 0) {
             window.timerExpired = true;
             localStorage.removeItem(quizKey);
-
-            // 🔥 FORCE SUBMIT (no button dependency)
             let input = document.createElement("input");
             input.type = "hidden";
             input.name = "submit_quiz";
             input.value = "1";
             navForm.appendChild(input);
-
             navForm.submit();
             return;
         }
@@ -359,6 +359,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     updateTimer();
     setInterval(updateTimer, 1000);
+
+    // Auto-save answer and update progress bar when radio button is clicked
+    const radioButtons = document.querySelectorAll('input[name="answer"]');
+    const currentIndex = <?php echo $currentIdx; ?>;
+
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const selectedValue = this.value;
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `ajax_save=1&q_index=${currentIndex}&answer=${encodeURIComponent(selectedValue)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update answered count display
+                    const newCount = data.answeredCount;
+                    answeredCountSpan.textContent = `Items up to 10 | ${newCount} answered`;
+                    // Update progress bar width based on answered count
+                    const newPercent = (newCount / totalQuestions) * 100;
+                    progressFill.style.width = newPercent + '%';
+                }
+            })
+            .catch(err => console.error('Auto-save error:', err));
+        });
+    });
 </script>
 </body>
 </html>
