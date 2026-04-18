@@ -141,6 +141,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
             transition: background-color 0.2s ease;
         }
 
+        /* Active state for Quizzes */
+        .nav-item.active {
+            background-color: #fef0a1;
+            color: #f8b44c;
+        }
+
         .nav-item .icon-img {
             width: 24px;
             height: 24px;
@@ -326,13 +332,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         </div>
 
         <nav class="nav-menu">
-            <a href="quizzes.php" class="nav-item">
+            <!-- Quizzes link now has the 'active' class -->
+            <a href="quizzes.php" class="nav-item active">
                 <img src="quizzesicon.png" alt="Quizzes" class="icon-img">
                 <span>Quizzes</span>
-            </a>
-            <a href="#" class="nav-item">
-                <img src="library.png" alt="Library" class="icon-img">
-                <span>Your Library</span>
             </a>
         </nav>
 

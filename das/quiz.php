@@ -2,7 +2,6 @@
 session_start();
 require_once 'questions.php';
 
-// Authentication & session checks
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit();
@@ -17,7 +16,6 @@ $difficulty = $_SESSION['difficulty'];
 $username = $_SESSION['username'] ?? 'Sanchez';
 $email = $_SESSION['email'] ?? 'sanchez@example.com';
 
-// Initialize or restore quiz state
 if (!isset($_SESSION['quiz_questions']) || !isset($_SESSION['quiz_current_index'])) {
     $pool = getQuestionPool($subject, $difficulty);
     if (empty($pool)) {
@@ -35,9 +33,7 @@ $currentIdx = $_SESSION['quiz_current_index'];
 $currentQuestion = $questions[$currentIdx];
 $userAnswers = $_SESSION['quiz_user_answers'];
 
-// Handle navigation and final submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // AJAX save answer
     if (isset($_POST['ajax_save'])) {
         $idx = (int)$_POST['q_index'];
         $selected = $_POST['answer'] ?? null;
@@ -51,14 +47,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit();
     }
-    
-    // Save current answer from standard form submission (fallback)
+
     if (isset($_POST['answer'])) {
         $userAnswers[$currentIdx] = $_POST['answer'];
         $_SESSION['quiz_user_answers'] = $userAnswers;
     }
 
-    // Navigation
     if (isset($_POST['next']) && $currentIdx + 1 < $total) {
         $_SESSION['quiz_current_index'] = $currentIdx + 1;
         header("Location: quiz.php");
@@ -68,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: quiz.php");
         exit();
     } elseif (isset($_POST['submit_quiz'])) {
-        // Calculate score
         $score = 0;
         foreach ($questions as $idx => $q) {
             if ($userAnswers[$idx] === $q['ans']) $score++;
@@ -90,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuizBee - Taking Quiz</title>
-    <style> 
+    <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -148,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.1rem;
             transition: background-color 0.2s ease;
         }
-        .nav-item.active { background-color: #fef0a1; color: #f8b44c; }
+        .nav-item.active { background-color: #fce883; color: #7d6b3a; }
         .nav-item .icon-img { width: 24px; height: 24px; margin-right: 15px; object-fit: contain; }
         .logout-container { border-top: 1px solid #fce883; padding-top: 20px; margin-top: 20px; }
         .main-content { flex-grow: 1; padding: 40px 60px; background-color: #ffffff; overflow-y: auto; }
@@ -173,11 +166,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 30px;
             overflow: hidden;
         }
-        .progress-bar-fill { 
-            height: 100%; 
-            background-color: #558df2; 
-            border-radius: 10px; 
-            width: 0%; 
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #558df2;
+            border-radius: 10px;
+            width: 0%;
             transition: width 0.3s ease;
         }
         .question-card { background-color: #fdf3bb; padding: 30px; border-radius: 12px; margin-bottom: 20px; }
@@ -230,6 +223,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: bold;
             text-align: left;
         }
+
+        /* Submit confirm modal */
+        #submit-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(253, 232, 131, 0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #submit-box {
+            background: #fdfce9;
+            border: 1.5px solid #fce883;
+            border-radius: 16px;
+            padding: 36px 40px;
+            width: 400px;
+            max-width: 90vw;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #submit-box .bee-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        #submit-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #f8b44c;
+            margin-bottom: 8px;
+        }
+        #submit-body {
+            font-size: 0.9rem;
+            color: #5a4a2a;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        #submit-body strong {
+            color: #f8b44c;
+        }
+        .submit-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        #submit-cancel {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: 1.5px solid #fce883;
+            background: #fff;
+            color: #7d6b3a;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        #submit-cancel:hover { background: #fef9e3; }
+        #submit-confirm {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: none;
+            background: #f8b44c;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        #submit-confirm:hover { background: #e6a030; }
     </style>
 </head>
 <body>
@@ -249,13 +313,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         <nav class="nav-menu">
-            <a href="quizzes.php" class="nav-item">
+            <a href="quizzes.php" class="nav-item active">
                 <img src="quizzesicon.png" alt="Quizzes" class="icon-img">
                 <span>Quizzes</span>
-            </a>
-            <a href="#" class="nav-item">
-                <img src="library.png" alt="Library" class="icon-img">
-                <span>Your Library</span>
             </a>
         </nav>
         <div class="logout-container">
@@ -290,7 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="post" id="navForm">
             <div class="question-card">
                 <div class="question-box">
-                    <h3><?php echo ($currentIdx+1) . ". " . htmlspecialchars($currentQuestion['q']); ?></h3>
+                    <h3><?php echo ($currentIdx + 1) . ". " . htmlspecialchars($currentQuestion['q']); ?></h3>
                 </div>
                 <?php foreach ($currentQuestion['opts'] as $opt): ?>
                     <label class="option-box">
@@ -308,15 +368,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php else: ?>
                     <button type="button" class="nav-btn" style="visibility: hidden;">Previous</button>
                 <?php endif; ?>
-                
+
                 <?php if ($currentIdx + 1 < $total): ?>
                     <button type="submit" name="next" class="nav-btn">Next</button>
                 <?php else: ?>
-                    <button type="submit" name="submit_quiz" class="nav-btn" onclick="return window.timerExpired || confirm('Are you sure you want to submit the quiz? You cannot change answers after submission.')">Submit Quiz</button>
+                    <button type="button" class="nav-btn" id="submitBtn">Submit Quiz</button>
                 <?php endif; ?>
             </div>
         </form>
     </main>
+</div>
+
+<!-- Submit confirm modal -->
+<div id="submit-overlay">
+    <div id="submit-box">
+        <div class="bee-icon">🐝</div>
+        <div id="submit-title">Submit your quiz?</div>
+        <div id="submit-body">
+            You are about to submit <strong><?php echo htmlspecialchars($subject); ?></strong>.<br>
+            You cannot change your answers after submission.
+        </div>
+        <div class="submit-buttons">
+            <button id="submit-cancel">Go back</button>
+            <button id="submit-confirm">Submit now</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -326,6 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const totalQuestions = <?php echo $total; ?>;
     const progressFill = document.getElementById('progressFill');
     const answeredCountSpan = document.getElementById('answeredCountDisplay');
+    const submitOverlay = document.getElementById('submit-overlay');
 
     const quizKey = "quizStartTime_<?php echo addslashes($subject); ?>";
 
@@ -335,6 +412,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         localStorage.setItem(quizKey, startTime);
     }
 
+    function submitQuiz() {
+        localStorage.removeItem(quizKey);
+        let input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "submit_quiz";
+        input.value = "1";
+        navForm.appendChild(input);
+        navForm.submit();
+    }
+
     function updateTimer() {
         const now = Date.now();
         const elapsed = Math.floor((now - startTime) / 1000);
@@ -342,13 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (timeLeft <= 0) {
             window.timerExpired = true;
-            localStorage.removeItem(quizKey);
-            let input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "submit_quiz";
-            input.value = "1";
-            navForm.appendChild(input);
-            navForm.submit();
+            submitQuiz();
             return;
         }
 
@@ -360,12 +441,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     updateTimer();
     setInterval(updateTimer, 1000);
 
-    // Auto-save answer and update progress bar when radio button is clicked
+    // Submit button opens modal
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            submitOverlay.style.display = 'flex';
+        });
+    }
+
+    // Modal confirm — actually submit
+    document.getElementById('submit-confirm').addEventListener('click', () => {
+        submitOverlay.style.display = 'none';
+        submitQuiz();
+    });
+
+    // Modal cancel — close modal
+    document.getElementById('submit-cancel').addEventListener('click', () => {
+        submitOverlay.style.display = 'none';
+    });
+
+    // Click outside modal to close
+    submitOverlay.addEventListener('click', (e) => {
+        if (e.target === submitOverlay) {
+            submitOverlay.style.display = 'none';
+        }
+    });
+
+    // Auto-save answer via AJAX
     const radioButtons = document.querySelectorAll('input[name="answer"]');
     const currentIndex = <?php echo $currentIdx; ?>;
 
     radioButtons.forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
             const selectedValue = this.value;
             fetch(window.location.href, {
                 method: 'POST',
@@ -375,10 +482,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update answered count display
                     const newCount = data.answeredCount;
                     answeredCountSpan.textContent = `Items up to 10 | ${newCount} answered`;
-                    // Update progress bar width based on answered count
                     const newPercent = (newCount / totalQuestions) * 100;
                     progressFill.style.width = newPercent + '%';
                 }

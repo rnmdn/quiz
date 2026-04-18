@@ -267,7 +267,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && !$locked)
                     </div>
                     <button type="submit" name="login">Login</button>
                 </form>
-                <p class="hint">Hint: Any email + password <strong>quiz123</strong></p>
             </div>
             <div class="bee-container">
                 <img src="bee.png" alt="QuizBee Mascot" class="bee-image">

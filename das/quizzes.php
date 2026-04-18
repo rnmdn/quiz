@@ -221,10 +221,6 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
                 <img src="quizzesicon.png" alt="Quizzes" class="icon-img">
                 <span>Quizzes</span>
             </a>
-            <a href="#" class="nav-item">
-                <img src="library.png" alt="Library" class="icon-img">
-                <span>Your Library</span>
-            </a>
         </nav>
 
         <div class="logout-container">

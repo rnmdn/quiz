@@ -180,10 +180,6 @@ $total = count($questions);
                 <img src="quizzesicon.png" alt="Quizzes" class="icon-img">
                 <span>Quizzes</span>
             </a>
-            <a href="#" class="nav-item">
-                <img src="library.png" alt="Library" class="icon-img">
-                <span>Your Library</span>
-            </a>
         </nav>
         <div class="logout-container">
             <a href="logout.php" class="nav-item logout">
@@ -223,7 +219,7 @@ $total = count($questions);
             <?php endfor; ?>
         </div>
 
-        <a href="result.php" class="back-btn">← Back to Results</a>
+        <a href="result.php" class="back-btn">Back to Results</a>
     </main>
 </div>
 
