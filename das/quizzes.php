@@ -145,7 +145,7 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
         .main-content {
             flex-grow: 1;
             padding: 60px;
-            background-color: #ffffff; 
+            background-color: #F4F5F7; 
             overflow-y: auto;
         }
 

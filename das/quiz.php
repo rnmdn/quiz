@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .nav-item.active { background-color: #fce883; color: #7d6b3a; }
         .nav-item .icon-img { width: 24px; height: 24px; margin-right: 15px; object-fit: contain; }
         .logout-container { border-top: 1px solid #fce883; padding-top: 20px; margin-top: 20px; }
-        .main-content { flex-grow: 1; padding: 40px 60px; background-color: #ffffff; overflow-y: auto; }
+        .main-content { flex-grow: 1; padding: 40px 60px; background-color: #F4F5F7; overflow-y: auto; }
         .quiz-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .page-title { color: #f8b44c; font-size: 2.5rem; margin-bottom: 5px; }
         .page-subtitle { font-size: 1.4rem; font-weight: bold; color: #000; }

@@ -110,7 +110,7 @@ if ($percentage >= 80) {
         .main-content {
             flex-grow: 1;
             padding: 40px 60px 100px 60px;
-            background-color: #ffffff;
+            background-color: #F4F5F7;
             margin-left: 280px;
             display: flex;
             flex-direction: column;

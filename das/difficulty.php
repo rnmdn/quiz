@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         .main-content {
             flex-grow: 1;
             padding: 60px;
-            background-color: #ffffff;
+            background-color: #F4F5F7;
         }
 
         .page-title {
