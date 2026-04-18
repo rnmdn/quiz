@@ -160,8 +160,7 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
             display: flex;
             flex-direction: column;
             gap: 15px;
-            width: 100%;           /* Full width of parent */
-            /* Remove max-width restriction */
+            width: 100%;
         }
 
         .quiz-list-item {
@@ -176,7 +175,7 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
             text-decoration: none;
             transition: box-shadow 0.2s ease, transform 0.2s ease;
             cursor: pointer;
-            width: 100%;           /* Each item spans full width */
+            width: 100%;
         }
 
         .quiz-list-item:hover {
@@ -195,6 +194,71 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
             color: #000;
             font-size: 0.95rem;
             font-weight: 500;
+        }
+
+        /* Logout modal styles */
+        #logout-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(253, 232, 131, 0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #logout-box {
+            background: #fdfce9;
+            border: 1.5px solid #fce883;
+            border-radius: 16px;
+            padding: 36px 40px;
+            width: 400px;
+            max-width: 90vw;
+            text-align: center;
+        }
+        #logout-box .bee-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        #logout-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #f8b44c;
+            margin-bottom: 8px;
+        }
+        #logout-body {
+            font-size: 0.9rem;
+            color: #5a4a2a;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .logout-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        #logout-cancel {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: 1.5px solid #fce883;
+            background: #fff;
+            color: #7d6b3a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #logout-cancel:hover {
+            background: #fef9e3;
+        }
+        #logout-confirm {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: none;
+            background: #f8b44c;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #logout-confirm:hover {
+            background: #e6a030;
         }
     </style>
 </head>
@@ -224,7 +288,8 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
         </nav>
 
         <div class="logout-container">
-            <a href="logout.php" class="nav-item logout">
+            <!-- Changed to button that triggers modal -->
+            <a href="#" class="nav-item logout" id="logoutBtn">
                 <img src="logout.png" alt="Log Out" class="icon-img">
                 <span>Log Out</span>
             </a>
@@ -254,6 +319,45 @@ $email    = $_SESSION['email'] ?? 'sanchez@example.com';
         </div>
     </main>
 </div>
+
+<!-- Logout confirmation modal -->
+<div id="logout-overlay">
+    <div id="logout-box">
+        <div class="bee-icon">🐝</div>
+        <div id="logout-title">Log out of QuizBee?</div>
+        <div id="logout-body">Are you sure you want to leave?<br>Any unsaved progress will be lost.</div>
+        <div class="logout-buttons">
+            <button id="logout-cancel">Cancel</button>
+            <button id="logout-confirm">Log out</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutOverlay = document.getElementById('logout-overlay');
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            logoutOverlay.style.display = 'flex';
+        });
+    }
+
+    document.getElementById('logout-confirm').addEventListener('click', () => {
+        window.location.href = 'logout.php';
+    });
+
+    document.getElementById('logout-cancel').addEventListener('click', () => {
+        logoutOverlay.style.display = 'none';
+    });
+
+    logoutOverlay.addEventListener('click', (e) => {
+        if (e.target === logoutOverlay) {
+            logoutOverlay.style.display = 'none';
+        }
+    });
+</script>
 
 </body>
 </html>

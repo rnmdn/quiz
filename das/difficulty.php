@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
             display: none;
         }
 
-        /* Custom confirm modal */
+        /* Custom confirm modal for difficulty */
         #confirm-overlay {
             display: none;
             position: fixed;
@@ -312,6 +312,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         #confirm-ok:hover {
             background: #e6a030;
         }
+
+        /* Logout modal styles */
+        #logout-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(253, 232, 131, 0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #logout-box {
+            background: #fdfce9;
+            border: 1.5px solid #fce883;
+            border-radius: 16px;
+            padding: 36px 40px;
+            width: 400px;
+            max-width: 90vw;
+            text-align: center;
+        }
+        #logout-box .bee-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        #logout-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #f8b44c;
+            margin-bottom: 8px;
+        }
+        #logout-body {
+            font-size: 0.9rem;
+            color: #5a4a2a;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .logout-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        #logout-cancel {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: 1.5px solid #fce883;
+            background: #fff;
+            color: #7d6b3a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #logout-cancel:hover {
+            background: #fef9e3;
+        }
+        #logout-confirm {
+            padding: 10px 28px;
+            border-radius: 8px;
+            border: none;
+            background: #f8b44c;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #logout-confirm:hover {
+            background: #e6a030;
+        }
     </style>
 </head>
 <body>
@@ -332,7 +397,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         </div>
 
         <nav class="nav-menu">
-            <!-- Quizzes link now has the 'active' class -->
             <a href="quizzes.php" class="nav-item active">
                 <img src="quizzesicon.png" alt="Quizzes" class="icon-img">
                 <span>Quizzes</span>
@@ -340,7 +404,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         </nav>
 
         <div class="logout-container">
-            <a href="logout.php" class="nav-item logout">
+            <!-- Changed to trigger modal -->
+            <a href="#" class="nav-item logout" id="logoutBtn">
                 <img src="logout.png" alt="Log Out" class="icon-img">
                 <span>Log Out</span>
             </a>
@@ -365,7 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
     </main>
 </div>
 
-<!-- Custom confirm modal -->
+<!-- Custom confirm modal for difficulty -->
 <div id="confirm-overlay">
     <div id="confirm-box">
         <div id="confirm-title"></div>
@@ -377,11 +442,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
     </div>
 </div>
 
+<!-- Logout confirmation modal -->
+<div id="logout-overlay">
+    <div id="logout-box">
+        <div class="bee-icon">🐝</div>
+        <div id="logout-title">Log out of QuizBee?</div>
+        <div id="logout-body">Are you sure you want to leave?<br>Any unsaved progress will be lost.</div>
+        <div class="logout-buttons">
+            <button id="logout-cancel">Cancel</button>
+            <button id="logout-confirm">Log out</button>
+        </div>
+    </div>
+</div>
+
 <form id="difficulty-form" method="post" action="">
     <input type="hidden" name="difficulty" id="difficulty-input" value="">
 </form>
 
 <script>
+    // Difficulty selection modal logic
     const cards = document.querySelectorAll('.card');
     const form = document.getElementById('difficulty-form');
     const difficultyInput = document.getElementById('difficulty-input');
@@ -425,6 +504,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['difficulty'])) {
         if (e.target === overlay) {
             overlay.style.display = 'none';
             pendingDifficulty = null;
+        }
+    });
+
+    // Logout modal logic
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutOverlay = document.getElementById('logout-overlay');
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            logoutOverlay.style.display = 'flex';
+        });
+    }
+
+    document.getElementById('logout-confirm').addEventListener('click', () => {
+        window.location.href = 'logout.php';
+    });
+
+    document.getElementById('logout-cancel').addEventListener('click', () => {
+        logoutOverlay.style.display = 'none';
+    });
+
+    logoutOverlay.addEventListener('click', (e) => {
+        if (e.target === logoutOverlay) {
+            logoutOverlay.style.display = 'none';
         }
     });
 </script>
